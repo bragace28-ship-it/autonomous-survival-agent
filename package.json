@@ -1,1 +1,1 @@
-{"name":"autonomous-survival-agent-v2","private":true,"type":"module","scripts":{"dev":"tsx src/index.ts","test":"tsx tests/safety.test.ts","sim":"tsx src/index.ts"},"dependencies":{"viem":"^2.0.0","tsx":"^4.0.0","typescript":"^5.0.0"}}
+{"name":"autonomous-survival-agent-v2","private":true,"type":"module","engines":{"node":">=22"},"scripts":{"dev":"tsx src/index.ts","test":"tsx tests/safety.test.ts","sim":"tsx src/index.ts"},"dependencies":{"viem":"^2.0.0","tsx":"^4.0.0","typescript":"^5.0.0"}}
