@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ED & DU | Terapia da Beleza</title>
+<style>html,body,#app{margin:0;width:100%;height:100%;background:#f4f2ee}iframe{display:block;width:100%;height:100%;border:0}</style>
+</head>
+<body><div id="app"></div>
+<script>
+(async()=>{
+ const src='https://raw.githubusercontent.com/bragace28-ship-it/autonomous-survival-agent/main/eddu-test/preview.html?v=20260911';
+ try{
+  let html=await (await fetch(src,{cache:'no-store'})).text();
+  const broken="function render(){document.getElementById('app').innerHTML=role==='pro'?pro():client()}render();";
+  const fixed="function render(){if(role==='pro'){pro()}else{document.getElementById('app').innerHTML=client()}}render();";
+  if(!html.includes(broken)) throw new Error('versão do teste não encontrada');
+  html=html.replace(broken,fixed);
+  const frame=document.createElement('iframe');
+  frame.title='ED & DU | Terapia da Beleza';
+  frame.src=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));
+  document.getElementById('app').replaceChildren(frame);
+ }catch(e){document.getElementById('app').innerHTML='<div style="font:16px system-ui;padding:28px"><b>ED & DU</b><p>Não foi possível carregar o teste corrigido.</p><button onclick="location.reload()">Tentar novamente</button></div>';console.error(e)}
+})();
+</script>
+</body></html>
