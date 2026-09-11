@@ -4,67 +4,82 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Autonomous Survival Pro</title>
 <style>
-:root{color-scheme:dark}*{box-sizing:border-box}body{font-family:system-ui,-apple-system,sans-serif;max-width:1050px;margin:0 auto;padding:28px 18px;background:#08101d;color:#eef2ff}h1{font-size:clamp(36px,7vw,58px);margin:0 0 8px}h2{margin:0 0 12px}.lead{color:#b7c2da;font-size:18px;line-height:1.6}.pill{display:inline-block;padding:7px 11px;border-radius:999px;background:#16233e;margin:4px 6px 4px 0}.ok{color:#7ee787}.warn{color:#ffd166}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:22px 0}.card{background:#121d32;border:1px solid #273654;border-radius:16px;padding:18px}.price{font-size:38px;font-weight:800;margin:10px 0}.muted{color:#9eacc9}.cta{display:inline-block;background:#7ee787;color:#07120b;font-weight:800;text-decoration:none;padding:14px 20px;border-radius:12px;margin:8px 0}.small{font-size:13px;color:#9eacc9}.section{margin-top:28px}.feature{min-height:155px}.input{width:100%;padding:12px;border-radius:10px;border:1px solid #354666;background:#0d1729;color:#fff;margin:5px 0 12px}.btn{padding:12px 16px;border:0;border-radius:10px;background:#31476f;color:#fff;font-weight:700;cursor:pointer}.result{font-size:28px;font-weight:800}.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}@media(max-width:700px){.two{grid-template-columns:1fr}}
+:root{--bg:#0b1020;--panel:#151c33;--line:#2b375e;--text:#eef2ff;--muted:#aab4d0;--ok:#7ee787;--warn:#ffd166;--accent:#8b5cf6}*{box-sizing:border-box}body{font-family:system-ui,sans-serif;max-width:1100px;margin:0 auto;padding:28px 20px;background:var(--bg);color:var(--text)}h1{font-size:42px;margin:0 0 8px}.lead{color:var(--muted);font-size:18px;line-height:1.5}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:22px 0}.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}.pill{display:inline-block;padding:7px 11px;border-radius:999px;background:#1d2948;margin-right:6px}.ok{color:var(--ok)}.warn{color:var(--warn)}.muted{color:var(--muted)}.price{font-size:34px;margin:8px 0}.cta,button{display:inline-block;background:var(--accent);color:white;border:0;font-weight:800;text-decoration:none;padding:13px 18px;border-radius:12px;cursor:pointer}.small{font-size:13px;color:var(--muted)}.section{margin-top:26px}.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.field label{display:block;color:var(--muted);font-size:14px;margin-bottom:6px}.field input,.field textarea{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#0e1528;color:var(--text)}textarea{min-height:130px;resize:vertical}.metric{font-size:28px;font-weight:800}.result{margin-top:12px;padding:12px;border-radius:10px;background:#0e1528;border:1px solid var(--line)}.footer{margin-top:35px;padding-top:20px;border-top:1px solid var(--line)}a{color:#c4b5fd}
 </style>
 </head>
 <body>
 <h1>Autonomous Survival Pro</h1>
-<p class="lead">Uma ferramenta de análise e automação comercial. Ela ajuda pequenos negócios a entender margem, priorizar oportunidades e gerar ações comerciais mais rapidamente.</p>
-<p><span class="pill ok">Sistema online</span><span class="pill">Trading especulativo BLOQUEADO</span><span class="pill">Sem promessa de lucro</span></p>
+<p class="lead">Micro-SaaS de análise e automação comercial para pequenos negócios. Transforme dados simples em decisões práticas de preço, margem, prioridade e acompanhamento.</p>
+<p><span class="pill ok">MVP ONLINE</span><span class="pill">Trading real BLOQUEADO</span><span class="pill">Sem promessa de lucro</span></p>
 
 <div class="grid">
-  <div class="card feature"><h2>O que você vende</h2><p class="muted">Um cockpit comercial simples: margem, ponto de equilíbrio, oportunidades e geração de mensagens/propostas.</p></div>
-  <div class="card feature"><h2>Para quem</h2><p class="muted">Prestadores de serviço, pequenos e-commerces, representantes e profissionais que precisam vender com menos trabalho manual.</p></div>
-  <div class="card feature"><h2>Como ganha dinheiro</h2><p class="muted">Assinatura mensal. O pagamento é processado pela Stripe; o produto entrega ferramentas de análise e automação.</p></div>
+<div class="card"><b>Estado do agente</b><div class="metric">ALIVE</div><p class="muted">Núcleo em modo controlado</p></div>
+<div class="card"><b>Reserva operacional</b><div class="metric">US$ 5,00</div><p class="muted">Protegida</p></div>
+<div class="card"><b>Cota de clonagem</b><div class="metric">US$ 2,00</div><p class="muted">Protegida</p></div>
+<div class="card"><b>Estratégias especulativas</b><div class="metric warn">BLOQUEADAS</div><p class="muted">Até revisão humana</p></div>
 </div>
 
 <div class="section card">
-  <h2>Plano Pro</h2>
-  <div class="price">R$ 29,90 <span class="small">/ mês</span></div>
-  <p>Inclui painel de oportunidades, calculadora de margem, ponto de equilíbrio, geração de mensagens comerciais e acompanhamento das ações.</p>
-  <a class="cta" href="#assinar" onclick="document.getElementById('checkout-note').scrollIntoView({behavior:'smooth'});return false;">Quero usar o Pro</a>
-  <p id="checkout-note" class="small">O checkout real será ativado assim que o método de pagamento da sua conta Stripe estiver habilitado. A conta Stripe já está autorizada em produção.</p>
+<h2>O que você recebe</h2>
+<p>• Calculadora de margem e ponto de equilíbrio<br>• Priorização de oportunidades por valor e velocidade<br>• Geração de mensagens e propostas comerciais<br>• Rotinas de acompanhamento e próximos passos<br>• Painel simples para apoiar decisões comerciais</p>
+<div class="price">R$ 29,90 <span class="small">/ mês</span></div>
+<a class="cta" href="https://buy.stripe.com/4gM8wIeEeedVe1r32neME00" target="_blank" rel="noopener">Assinar agora</a>
+<p class="small">Checkout Stripe em produção. Pagamento por cartão nesta primeira versão.</p>
 </div>
 
-<div class="section two">
-  <div class="card">
-    <h2>Calculadora de margem</h2>
-    <label>Preço de venda (R$)</label><input id="sale" class="input" type="number" value="100" min="0" step="0.01">
-    <label>Custo total (R$)</label><input id="cost" class="input" type="number" value="60" min="0" step="0.01">
-    <button class="btn" onclick="calcMargin()">Calcular</button>
-    <p class="result" id="margin">40,0%</p><p class="small">Margem = (preço − custo) / preço.</p>
-  </div>
-  <div class="card">
-    <h2>Ponto de equilíbrio</h2>
-    <label>Custos fixos mensais (R$)</label><input id="fixed" class="input" type="number" value="3000" min="0" step="0.01">
-    <label>Margem de contribuição por venda (R$)</label><input id="contribution" class="input" type="number" value="40" min="0.01" step="0.01">
-    <button class="btn" onclick="calcBreakEven()">Calcular</button>
-    <p class="result" id="be">75 vendas</p><p class="small">Mostra quantas vendas cobrem os custos fixos.</p>
-  </div>
+<div class="section card">
+<h2>1. Calculadora de margem</h2>
+<div class="formgrid">
+<div class="field"><label>Preço de venda (R$)</label><input id="sell" type="number" step="0.01" value="100"></div>
+<div class="field"><label>Custo total (R$)</label><input id="cost" type="number" step="0.01" value="60"></div>
+<div class="field"><label>Despesas variáveis (R$)</label><input id="varcost" type="number" step="0.01" value="10"></div>
+</div>
+<button onclick="calcMargin()" style="margin-top:12px">Calcular</button>
+<div id="marginResult" class="result">Informe os valores e clique em Calcular.</div>
+</div>
+
+<div class="section card">
+<h2>2. Ponto de equilíbrio</h2>
+<div class="formgrid">
+<div class="field"><label>Custos fixos mensais (R$)</label><input id="fixed" type="number" step="0.01" value="3000"></div>
+<div class="field"><label>Margem de contribuição por venda (R$)</label><input id="contrib" type="number" step="0.01" value="40"></div>
+</div>
+<button onclick="calcBreakEven()" style="margin-top:12px">Calcular</button>
+<div id="beResult" class="result">Informe os valores e clique em Calcular.</div>
+</div>
+
+<div class="section card">
+<h2>3. Prioridade de oportunidade</h2>
+<div class="formgrid">
+<div class="field"><label>Receita potencial (R$)</label><input id="rev" type="number" step="0.01" value="500"></div>
+<div class="field"><label>Custo para executar (R$)</label><input id="opcost" type="number" step="0.01" value="80"></div>
+<div class="field"><label>Velocidade (1-10)</label><input id="speed" type="number" min="1" max="10" value="8"></div>
+</div>
+<button onclick="rankOpp()" style="margin-top:12px">Priorizar</button>
+<div id="rankResult" class="result">A pontuação é operacional; não é recomendação de investimento.</div>
+</div>
+
+<div class="section card">
+<h2>4. Gerador de mensagem comercial</h2>
+<div class="formgrid">
+<div class="field"><label>Cliente</label><input id="client" value="Empresa Exemplo"></div>
+<div class="field"><label>Oferta</label><input id="offer" value="Diagnóstico Comercial"></div>
+</div>
+<button onclick="makeMsg()" style="margin-top:12px">Gerar mensagem</button>
+<textarea id="msg" readonly style="margin-top:12px" placeholder="Sua mensagem aparecerá aqui"></textarea>
 </div>
 
 <div class="section">
-  <h2>Arquitetura do agente</h2>
-  <div class="grid">
-    <div class="card"><b>1. Revenue Engine</b><p class="muted">Micro-SaaS e APIs primeiro; trading é opcional e permanece bloqueado por padrão.</p></div>
-    <div class="card"><b>2. Token Router</b><p class="muted">Usa modelos baratos em tarefas rotineiras e deixa decisões complexas para modelos avançados.</p></div>
-    <div class="card"><b>3. Risk Engine</b><p class="muted">Nenhuma ação financeira passa direto do LLM para a carteira.</p></div>
-    <div class="card"><b>4. Treasury</b><p class="muted">Reserva operacional + cota de clonagem + sweep de excedente.</p></div>
-    <div class="card"><b>5. Background Yield</b><p class="muted">Analisa custo/retorno e pode recomendar yield de baixo risco; execução automática fica bloqueada até revisão.</p></div>
-    <div class="card"><b>6. Replication</b><p class="muted">Clones isolados podem ser gerados, mas financiamento de filhos exige uma política explícita.</p></div>
-  </div>
+<h2>Segurança e arquitetura</h2>
+<p class="muted">O núcleo financeiro mantém DRY RUN por padrão, protege reservas, impede acesso do modelo às chaves privadas e mantém trading especulativo bloqueado. O produto vendido é uma ferramenta comercial; ele não promete retorno financeiro.</p>
 </div>
 
-<div class="section card">
-  <h2>O que NÃO faz</h2>
-  <p class="muted">Não promete lucro, não faz lavagem/fraude, não manipula mercados, não expõe chaves privadas e não habilita trading real automaticamente. O núcleo financeiro permanece em modo seguro até cumprir os limites definidos.</p>
-</div>
-
+<div class="footer small"><a href="/privacy.html">Privacidade</a> · <a href="/terms.html">Termos de uso</a></div>
 <script>
-function money(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
-function calcMargin(){const s=Number(document.getElementById('sale').value);const c=Number(document.getElementById('cost').value);const m=s>0?((s-c)/s)*100:0;document.getElementById('margin').textContent=m.toFixed(1)+'%';}
-function calcBreakEven(){const f=Number(document.getElementById('fixed').value);const c=Number(document.getElementById('contribution').value);const n=c>0?Math.ceil(f/c):0;document.getElementById('be').textContent=n+' vendas';}
+function calcMargin(){const s=Number(document.getElementById('sell').value||0),c=Number(document.getElementById('cost').value||0),v=Number(document.getElementById('varcost').value||0);const m=s-c-v;const p=s?m/s*100:0;document.getElementById('marginResult').innerHTML=`Margem de contribuição: <b>R$ ${m.toFixed(2)}</b><br>Margem percentual: <b>${p.toFixed(1)}%</b>`}
+function calcBreakEven(){const f=Number(document.getElementById('fixed').value||0),c=Number(document.getElementById('contrib').value||0);const n=c>0?Math.ceil(f/c):0;document.getElementById('beResult').innerHTML=`Ponto de equilíbrio: <b>${n} vendas/mês</b>`}
+function rankOpp(){const r=Number(document.getElementById('rev').value||0),c=Number(document.getElementById('opcost').value||0),sp=Number(document.getElementById('speed').value||0);const net=r-c;const roi=c>0?net/c:0;const score=Math.max(0,Math.min(100,(roi*25)+(sp*7.5)));document.getElementById('rankResult').innerHTML=`Resultado estimado: <b>R$ ${net.toFixed(2)}</b><br>ROI operacional estimado: <b>${(roi*100).toFixed(1)}%</b><br>Pontuação: <b>${score.toFixed(0)}/100</b>`}
+function makeMsg(){const c=document.getElementById('client').value||'Cliente',o=document.getElementById('offer').value||'nossa solução';document.getElementById('msg').value=`Olá, ${c}!\n\nAnalisei uma oportunidade que pode fazer sentido para sua operação: ${o}.\n\nA proposta é começar com um diagnóstico rápido, estimar impacto e definir os próximos passos antes de qualquer compromisso maior.\n\nPosso apresentar o escopo e o valor em uma conversa breve?`}
 calcMargin();calcBreakEven();
 </script>
-</body>
-</html>
+</body></html>
