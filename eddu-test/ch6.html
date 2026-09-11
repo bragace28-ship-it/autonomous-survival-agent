@@ -1,0 +1,72 @@
+=v10Client(id);if(!c)return;app.selectedClient=id;
+ showModal('Ficha do Cliente',`
+ <div class=actions><button class=btn onclick="editClient(${id})">Editar cadastro</button><button class=btn onclick="wa('${esc(c.phone)}','Olá ${esc(c.name)}, tudo bem? Aqui é da ED & DU | Terapia da Beleza.')">WhatsApp</button><button class="btn primary" onclick="sendTerm(${id})">Enviar termo</button></div><br>
+ <div class=grid2><div class=card><h3>Dados pessoais</h3><p><b>${esc(c.name)}</b><br>${esc(c.phone)}<br>${esc(c.email||'')}${c.birth?'<br>Nascimento: '+v10Date(c.birth):''}</p><span class="badge ok">${c.points||0} pontos</span></div>
+ <div class=card><h3>Termo de responsabilidade</h3><span class="badge ${c.term?'ok':'warn'}">${c.term?'Aceito digitalmente':'Pendente de aceite'}</span><p class=muted>O aceite fica registrado com data e hora no histórico do documento.</p></div></div><br>
+ <div class=card><h3>Nova anamnese / teste</h3>
+ <div class=two><div class=field><label>Data</label><input id=ad type=date value="${v10Today()}"></div><div class=field><label>Hora</label><input id=at type=time value="${new Date().toTimeString().slice(0,5)}"></div></div>
+ <div class=field><label>Procedimento</label><input id=aproc placeholder="Ex.: Mechas / teste de mecha"></div>
+ <div class=field><label>Parecer profissional</label><textarea id=ax rows=4 placeholder="Condição do cabelo, resultado do teste, análise técnica e recomendação."></textarea></div>
+ <div class=field><label>Riscos / contraindicações</label><textarea id=aris rows=3 placeholder="Ex.: incompatibilidade, risco de quebra, elasticidade comprometida..."></textarea></div>
+ <div class=field><label>Fotos da anamnese</label><input id=af type=file accept="image/*" multiple></div>
+ <button class="btn primary" onclick="saveAnamRich(${id})">Salvar anamnese no histórico</button>
+ </div><br>
+ <div class=card><h3>Histórico de anamneses</h3>${(c.anams||[]).map(a=>v10AnamCard(a,id)).join('')||'<p class=muted>Nenhuma anamnese registrada.</p>'}</div><br>
+ <div class=card><h3>Documentos enviados ao cliente</h3>${(c.sharedDocs||[]).map(d=>v10DocCard(d)).join('')||'<p class=muted>Nenhum documento enviado.</p>'}</div><br>
+ <div class=card><h3>Histórico de procedimentos e registros</h3>${(c.history||[]).length?'<ul>'+c.history.map(h=>`<li>${esc(h)}</li>`).join('')+'</ul>':'<p class=muted>Sem registros.</p>'}</div>`)
+}
+function v10AnamCard(a,id){
+ return `<div class=v10-doc><b>${v10Date(a.date)} às ${esc(a.time)} • ${esc(a.procedure)}</b><p>${esc(a.desc)}</p>${a.risk?`<div class=v10-alert><b>Riscos / contraindicações</b><br>${esc(a.risk)}</div>`:''}
+ ${(a.photos||[]).length?`<div class=v10-thumbs>${a.photos.map(p=>`<img src="${p}" alt="Foto da anamnese">`).join('')}</div>`:''}
+ <div class=v10-actions><button class="btn primary" onclick="shareAnam(${id},${a.id})">Enviar ao cliente</button></div></div>`
+}
+function v10DocCard(d){
+ return `<div class=v10-doc><b>${esc(d.title)}</b><p class=v10-mini>${v10Date(d.date)}${d.time?' • '+d.time:''} • ${d.status==='accepted'?'Aceito pelo cliente':'Aguardando aceite'}</p>
+ ${d.desc?`<p><b>Parecer:</b> ${esc(d.desc)}</p>`:''}${d.risk?`<div class=v10-alert><b>Risco informado</b><br>${esc(d.risk)}</div>`:''}
+ ${(d.photos||[]).length?`<div class=v10-thumbs>${d.photos.map(p=>`<img src="${p}" alt="Foto vinculada ao documento">`).join('')}</div>`:''}
+ <div class=v10-actions>${d.status==='accepted'?'<span class="badge ok">✓ ACORDO REGISTRADO</span>':'<span class="badge warn">Aguardando cliente</span>'}</div></div>`
+}
+async function saveAnamRich(id){
+ let c=v10Client(id),date=document.getElementById('ad').value,time=document.getElementById('at').value,procedure=document.getElementById('aproc').value.trim(),desc=document.getElementById('ax').value.trim(),risk=document.getElementById('aris').value.trim();
+ if(!date||!time||!procedure||!desc){toast('Preencha data, hora, procedimento e parecer.');return}
+ let photos=await v10ReadImages(document.getElementById('af'));
+ let a={id:Date.now(),date,time,procedure,desc,risk,photos};
+ c.anams.unshift(a);v10History(c,`${v10Date(date)} ${time} • ${procedure} • Anamnese registrada`);
+ save();toast('Anamnese salva no histórico com as fotos.');openClientFile(id)
+}
+function shareAnam(clientId,anamId){
+ let c=v10Client(clientId),a=(c.anams||[]).find(x=>x.id===anamId);if(!c||!a)return;
+ c.sharedDocs.unshift({id:Date.now(),type:'anamnesis',title:`Anamnese • ${a.procedure}`,date:a.date,time:a.time,clientId,anamId:a.id,status:'pending',desc:a.desc,risk:a.risk,photos:a.photos||[],termRequired:true});
+ v10History(c,`${v10Date(a.date)} • Documento enviado ao cliente para leitura e acordo`);
+ save();toast('Anamnese enviada ao aplicativo do cliente.');openClientFile(clientId)
+}
+function sendTerm(id){
+ let c=v10Client(id);if(!c)return;
+ c.sharedDocs.unshift({id:Date.now(),type:'term',title:'Termo de Responsabilidade',date:v10Today(),clientId:id,status:'pending',text:'Declaro que fui informado(a) sobre o procedimento, os resultados do teste, os riscos, contraindicações e recomendações profissionais. Após ler este documento, declaro meu acordo com a realização do procedimento conforme as informações apresentadas.'});
+ save();toast('Termo enviado para aceite do cliente.');openClientFile(id)
+}
+
+/* --- COMANDA / PARCELAMENTO INTERNO --- */
+function closeOrder(id){
+ let o=db.orders.find(x=>x.id===id);if(!o)return;let x=orderCalc(o);
+ if(!o.items.length){toast('Adicione pelo menos um serviço antes de fechar.');openOrder(id);return}
+ showModal('Fechar comanda',`<div class=summary><div class=summary-row><span>Total do cliente</span><b>${money(x.net)}</b></div><div class=summary-row><span>Comissão 30%</span><b>${money(x.commission)}</b></div><div class=summary-row><span>Custo do serviço</span><b>${money(x.cost)}</b></div><div class=summary-row><span>Lucro</span><b>${money(x.profit)}</b></div></div><br>
+ <div class=grid2><button class="btn primary" onclick="finalizeOrderDirect(${id})"><b>Enviar para pagamento</b><br><small>Pix / cartão / pagamento à vista</small></button>
+ <button class=btn onclick="showInternalPlan(${id})"><b>Parcelamento salão</b><br><small>Parcelas diretamente com a ED & DU</small></button></div><br><div class=actions><button class=btn onclick="closeModal()">Cancelar</button></div>`)
+}
+function finalizeOrderDirect(id){let o=db.orders.find(x=>x.id===id);o.open=false;o.payment='pending';o.closedAt=v10Now();save();closeModal();toast('Comanda fechada e enviada para pagamento.');render()}
+function showInternalPlan(id){
+ let o=db.orders.find(x=>x.id===id),x=orderCalc(o);
+ showModal('Parcelamento interno do salão',`<div class=v10-alert><b>Total a receber: ${money(x.net)}</b><p>O parcelamento é feito diretamente pelo salão.</p></div><br>
+ <div class=two><div class=field><label>Quantidade de parcelas</label><select id=iq>${[2,3,4,5,6,8,10,12].map(n=>`<option>${n}</option>`).join('')}</select></div><div class=field><label>Juros (%)</label><input id=irate type=number step=.01 min=0 value=0></div></div>
+ <div class=field><label>Forma de pagamento</label><select id=imethod><option value=pix>Pix</option><option value=boleto>Boleto</option></select></div>
+ <div class=field><label>Primeiro vencimento</label><input id=ifirst type=date value="${v10Tomorrow(v10Today())}"></div>
+ <div class=actions><button class=btn onclick="closeModal()">Cancelar</button><button class="btn primary" onclick="createInternalPlan(${id})">Criar parcelamento</button></div>`)
+}
+function createInternalPlan(orderId){
+ let o=db.orders.find(v=>v.id===orderId),x=orderCalc(o),n=Number(document.getElementById('iq').value),rate=Number(document.getElementById('irate').value)||0,method=document.getElementById('imethod').value,first=document.getElementById('ifirst').value;
+ let total=x.net*(1+rate/100),each=Number((total/n).toFixed(2)),d=new Date(first+'T12:00:00');
+ db.receivables=db.receivables||[];db.receivables=db.receivables.filter(r=>r.orderId!==orderId);
+ for(let i=1;i<=n;i++){let due=new Date(d);due.setMonth(d.getMonth()+i-1);db.receivables.push({id:Date.now()+i,orderId,clientId:o.clientId,client:o.client,amount:i===n?Number((total-each*(n-1)).toFixed(2)):each,due:due.toISOString().slice(0,10),installment:`${i}/${n}`,method,status:'open',reminderSent:false})}
+ o.open=false;o.payment='internal';o.internalPlan={n,rate,method,total};o.closedAt=v10Now();save();closeModal();toast(`Parcelamento criado em ${n}x e enviado para contas a receber.`);render()
+}

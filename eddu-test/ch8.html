@@ -1,0 +1,44 @@
+dy></table></div></div>`
+}
+function receiveInstallment(id){let x=db.receivables.find(v=>v.id===id);if(x){x.status='paid';x.paidAt=v10Now();save();toast('Parcela recebida.');render()}}
+function remindInstallment(id){let x=db.receivables.find(v=>v.id===id),c=v10Client(x?.clientId);if(!x||!c)return;wa(c.phone,`Olá ${c.name}! Lembrete ED & DU: sua parcela ${x.installment} de ${money(x.amount)} vence em ${v10Date(x.due)}. Forma: ${v10Payment(x.method)}.`)}
+
+/* --- ÁREA DO CLIENTE --- */
+function client(){
+ let p=app.clientPage;if(p==='book')return clientBook();if(p==='appointments')return clientAppointments();if(p==='payments')return clientPayments();if(p==='documents')return clientDocuments();return clientHome()
+}
+function clientHome(){
+ let c=db.clients[0]||{name:'Cliente',points:0},docs=(c.sharedDocs||[]).filter(d=>d.status!=='accepted'),tomorrow=v10Tomorrow(v10Today()),due=(db.receivables||[]).filter(x=>x.clientId===c.id&&x.due===tomorrow&&x.status!=='paid');
+ return `${header()}<main><div class=client-shell><div class=hero><div><div style="color:#cfcac2">ED & DU | Terapia da Beleza</div><h1>Olá, ${esc((c.name||'Cliente').split(' ')[0])}! 👋</h1><p>Que bom ter você aqui.</p></div><div class=points><small>Pontos Fidelidade</small><strong>${c.points||0}</strong></div></div>
+ <div class=client-nav><button class="btn primary" onclick="cgo('book')">+ Agendar</button><button class=btn onclick="cgo('appointments')">Meus agendamentos</button><button class=btn onclick="cgo('payments')">Pagamentos</button><button class=btn onclick="cgo('documents')">Documentos ${docs.length?`(${docs.length})`:''}</button></div>
+ ${docs.length?`<div class=v10-ok><b>Há ${docs.length} documento(s) aguardando seu acordo.</b><p>Leia a anamnese, veja as fotos e confirme o termo.</p></div><br>`:''}
+ ${due.length?`<div class=v10-alert><b>🔔 Lembrete de pagamento</b><p>Você tem ${due.length} parcela(s) vencendo amanhã.</p></div><br>`:''}
+ <div class=card><h2>Agende seu próximo momento</h2><p class=muted>Escolha um serviço e siga as etapas.</p><div class=service-grid>${SERVICES.map(s=>`<div class=service-card onclick="startBooking(${s.id})"><div class=service-art>${s.icon}</div><div class=service-body><b>${s.n}</b><small>A partir de ${money(s.base)}</small></div></div>`).join('')}</div></div></div></main>`
+}
+function clientDocuments(){
+ let c=db.clients[0]||{},docs=c.sharedDocs||[];
+ return `${header()}<main><div class=client-shell><div class=page-head><div><h1>Documentos</h1><p>Anamnese, fotos, parecer profissional e termo de responsabilidade.</p></div></div>
+ ${docs.length?docs.map(d=>clientDocCard(d,c.id)).join(''):'<div class=card><p class=muted>Nenhum documento disponível.</p></div>'}</div></main>`
+}
+function clientDocCard(d,cid){
+ return `<div class=card style="margin-bottom:14px"><div class=page-head><div><h2>${esc(d.title)}</h2><span class="badge ${d.status==='accepted'?'ok':'warn'}">${d.status==='accepted'?'Acordo registrado':'Aguardando seu acordo'}</span></div><span class=v10-mini>${v10Date(d.date)}${d.time?' • '+d.time:''}</span></div>
+ ${d.desc?`<p><b>Parecer profissional</b><br>${esc(d.desc)}</p>`:''}${d.risk?`<div class=v10-alert><b>Riscos / contraindicações</b><br>${esc(d.risk)}</div><br>`:''}
+ ${(d.photos||[]).length?`<h3>Fotos</h3><div class=v10-thumbs>${d.photos.map(p=>`<img src="${p}" alt="Foto enviada pelo salão">`).join('')}</div><br>`:''}
+ ${d.text?`<div class=v10-doc><b>Termo de responsabilidade</b><p>${esc(d.text)}</p></div>`:''}
+ ${d.status!=='accepted'?`<div class=v10-ok><label><input type=checkbox id="agree_${d.id}"> Li as informações, entendi os riscos e estou de acordo com o documento e termo.</label><br><br><button class="btn primary" onclick="acceptDoc(${cid},${d.id})">Dar meu acordo</button></div>`:`<div class=v10-ok><b>✓ Acordo registrado</b><p>${esc(d.acceptedAt||'')}</p></div>`}
+ </div>`
+}
+function acceptDoc(cid,id){
+ let c=v10Client(cid),d=(c.sharedDocs||[]).find(x=>x.id===id);if(!d)return;
+ let cb=document.getElementById('agree_'+id);if(!cb?.checked){toast('Confirme a leitura e o acordo.');return}
+ d.status='accepted';d.acceptedAt=v10Now();c.term=true;v10History(c,`${v10Date(d.date)} • ${d.title} • Aceite digital registrado em ${d.acceptedAt}`);save();toast('Acordo registrado com data e hora.');render()
+}
+
+/* Render remains the original visual shell. */
+function render(){try{if(app.role==='pro')pro();else document.getElementById('root').innerHTML=client()}catch(e){console.error(e);document.getElementById('root').innerHTML='<div style="padding:30px;font-family:Arial">Ocorreu um erro ao carregar. Recarregue a página.</div>'}}
+
+safeRender();
+</script>
+<noscript><div style="padding:24px;font-family:Arial,sans-serif">Ative o JavaScript no navegador para usar o aplicativo ED & DU.</div></noscript>
+</body>
+</html>

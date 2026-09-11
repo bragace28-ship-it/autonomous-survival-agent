@@ -1,0 +1,74 @@
+function v10FinanceDash(sales,costs,profit,payOpen,recvOpen){
+ return `<div class=grid4><div class="card metric"><small>Faturamento</small><strong>${money(sales)}</strong></div><div class="card metric"><small>A pagar</small><strong>${money(payOpen)}</strong></div><div class="card metric"><small>A receber</small><strong>${money(recvOpen)}</strong></div><div class="card metric"><small>Lucro estimado</small><strong>${money(profit)}</strong></div></div><br>
+ <div class=grid2><div class=card><h2>Próximos vencimentos</h2>${(db.payables||[]).filter(x=>x.status!=='paid').sort((a,b)=>a.due.localeCompare(b.due)).slice(0,6).map(x=>`<p><b>${esc(x.description)}</b><br>${v10Date(x.due)} • ${money(x.value)} • ${v10Payment(x.method)}</p>`).join('')||'<p class=muted>Nenhuma conta a pagar aberta.</p>'}</div>
+ <div class=card><h2>Recebimentos</h2>${(db.receivables||[]).filter(x=>x.status!=='paid').sort((a,b)=>a.due.localeCompare(b.due)).slice(0,6).map(x=>`<p><b>${esc(x.client)}</b> • ${x.installment}<br>${v10Date(x.due)} • ${money(x.amount)} • ${v10Payment(x.method)}</p>`).join('')||'<p class=muted>Nenhum recebimento pendente.</p>'}</div></div><br>
+ <div class=card><h2>Indicadores</h2><p>Atendimentos <b>${db.att}</b></p><p>Ticket médio <b>${money(sales/Math.max(1,db.att))}</b></p><p>Clientes <b>${db.clients.length}</b></p><p>Comandas pagas <b>${paidCount()}</b></p></div>`
+}
+function paidCount(){return db.orders.filter(o=>o.payment==='paid').length}
+function v10Payables(){
+ return `<div class=page-head><div><h2>Contas a pagar</h2><p>Despesas, consumo, fornecedores e compras do salão.</p></div><button class="btn primary" onclick="newPayable()">+ Nova conta</button></div>
+ <div class=card><div class=table-scroll><table><thead><tr><th>Conta</th><th>Vencimento</th><th>Valor</th><th>Forma</th><th>Status</th><th>Anexo</th><th></th></tr></thead><tbody>${(db.payables||[]).sort((a,b)=>a.due.localeCompare(b.due)).map(x=>`<tr><td><b>${esc(x.description)}</b><br><span class=v10-mini>${esc(x.category||'')}</span></td><td>${v10Date(x.due)}</td><td>${money(x.value)}</td><td>${v10Payment(x.method)}</td><td><span class="badge ${x.status==='paid'?'ok':'warn'}">${x.status==='paid'?'Paga':'Em aberto'}</span></td><td>${x.fileName?esc(x.fileName):'—'}</td><td><div class=actions><button class=btn onclick="editPayable(${x.id})">Editar</button>${x.status!=='paid'?`<button class="btn primary" onclick="payPayable(${x.id})">Pagar</button>`:''}</div></td></tr>`).join('')||'<tr><td colspan=7>Nenhuma conta cadastrada.</td></tr>'}</tbody></table></div></div>`
+}
+function v10PayForm(x,mode){
+ return `<div class=two><div class=field><label>Descrição</label><input id=pdesc value="${esc(x.description||'')}" placeholder="Ex.: compra de produtos"></div><div class=field><label>Categoria</label><select id=pcat>${['Consumo','Produtos','Fornecedor','Aluguel','Internet','Energia','Água','Impostos','Marketing','Outros'].map(v=>`<option ${x.category===v?'selected':''}>${v}</option>`).join('')}</select></div></div>
+ <div class=two><div class=field><label>Data de vencimento</label><input id=pdue type=date value="${x.due||v10Today()}"></div><div class=field><label>Valor</label><input id=pval type=number min=0 step=.01 value="${x.value||0}"></div></div>
+ <div class=field><label>Forma de pagamento</label><select id=pmethod>${[['pix','Pix'],['boleto','Boleto'],['credit','Cartão de crédito recorrente'],['debit','Cartão de débito'],['cash','Dinheiro']].map(v=>`<option value="${v[0]}" ${x.method===v[0]?'selected':''}>${v[1]}</option>`).join('')}</select></div>
+ <div class=field><label>Anexar PDF ou foto do cupom fiscal</label><input id=pfile type=file accept="application/pdf,image/*"></div>
+ ${x.fileName?`<p class=v10-mini>Arquivo atual: ${esc(x.fileName)}</p>`:''}
+ <div class=actions><button class=btn onclick="closeModal()">Cancelar</button><button class="btn primary" onclick="${mode==='new'?'savePayable()':'updatePayable('+x.id+')'}">Salvar</button></div>`
+}
+function newPayable(){showModal('Nova conta a pagar',v10PayForm({},'new'))}
+function editPayable(id){let x=(db.payables||[]).find(v=>v.id===id);if(x)showModal('Editar conta a pagar',v10PayForm(x,'edit'))}
+async function savePayable(){
+ let f=await v10ReadFile(document.getElementById('pfile'));db.payables.unshift({id:Date.now(),description:document.getElementById('pdesc').value.trim(),category:document.getElementById('pcat').value,due:document.getElementById('pdue').value,value:Number(document.getElementById('pval').value)||0,method:document.getElementById('pmethod').value,status:'open',fileName:f?.name||'',fileData:f?.data||'',createdAt:v10Now()});save();closeModal();toast('Conta a pagar lançada.');render()
+}
+async function updatePayable(id){
+ let x=db.payables.find(v=>v.id===id),f=await v10ReadFile(document.getElementById('pfile'));Object.assign(x,{description:document.getElementById('pdesc').value.trim(),category:document.getElementById('pcat').value,due:document.getElementById('pdue').value,value:Number(document.getElementById('pval').value)||0,method:document.getElementById('pmethod').value});if(f){x.fileName=f.name;x.fileData=f.data}save();closeModal();toast('Conta atualizada.');render()
+}
+function payPayable(id){let x=db.payables.find(v=>v.id===id);if(x){x.status='paid';x.paidAt=v10Now();save();toast('Conta marcada como paga.');render()}}
+function v10Receivables(){
+ let list=(db.receivables||[]).slice().sort((a,b)=>a.due.localeCompare(b.due));
+ return `<div class=page-head><div><h2>Contas a receber</h2><p>Parcelamentos internos e recebimentos do salão.</p></div></div><div class=card><div class=table-scroll><table><thead><tr><th>Cliente</th><th>Parcela</th><th>Vencimento</th><th>Valor</th><th>Forma</th><th>Status</th><th></th></tr></thead><tbody>${list.map(x=>`<tr><td><b>${esc(x.client)}</b></td><td>${x.installment||'—'}</td><td>${v10Date(x.due)}</td><td>${money(x.amount)}</td><td>${v10Payment(x.method)}</td><td><span class="badge ${x.status==='paid'?'ok':'warn'}">${x.status==='paid'?'Recebida':x.status==='overdue'?'Atrasada':'Em aberto'}</span></td><td><div class=actions>${x.status!=='paid'?`<button class="btn primary" onclick="receiveInstallment(${x.id})">Receber</button><button class=btn onclick="remindInstallment(${x.id})">Lembrar</button>`:''}</div></td></tr>`).join('')||'<tr><td colspan=7>Nenhum recebimento cadastrado.</td></tr>'}</tbody></table></div></div>`
+}
+function receiveInstallment(id){let x=db.receivables.find(v=>v.id===id);if(x){x.status='paid';x.paidAt=v10Now();save();toast('Parcela recebida.');render()}}
+function remindInstallment(id){let x=db.receivables.find(v=>v.id===id),c=v10Client(x?.clientId);if(!x||!c)return;wa(c.phone,`Olá ${c.name}! Lembrete ED & DU: sua parcela ${x.installment} de ${money(x.amount)} vence em ${v10Date(x.due)}. Forma: ${v10Payment(x.method)}.`)}
+
+/* --- ÁREA DO CLIENTE --- */
+function client(){
+ let p=app.clientPage;if(p==='book')return clientBook();if(p==='appointments')return clientAppointments();if(p==='payments')return clientPayments();if(p==='documents')return clientDocuments();return clientHome()
+}
+function clientHome(){
+ let c=db.clients[0]||{name:'Cliente',points:0},docs=(c.sharedDocs||[]).filter(d=>d.status!=='accepted'),tomorrow=v10Tomorrow(v10Today()),due=(db.receivables||[]).filter(x=>x.clientId===c.id&&x.due===tomorrow&&x.status!=='paid');
+ return `${header()}<main><div class=client-shell><div class=hero><div><div style="color:#cfcac2">ED & DU | Terapia da Beleza</div><h1>Olá, ${esc((c.name||'Cliente').split(' ')[0])}! 👋</h1><p>Que bom ter você aqui.</p></div><div class=points><small>Pontos Fidelidade</small><strong>${c.points||0}</strong></div></div>
+ <div class=client-nav><button class="btn primary" onclick="cgo('book')">+ Agendar</button><button class=btn onclick="cgo('appointments')">Meus agendamentos</button><button class=btn onclick="cgo('payments')">Pagamentos</button><button class=btn onclick="cgo('documents')">Documentos ${docs.length?`(${docs.length})`:''}</button></div>
+ ${docs.length?`<div class=v10-ok><b>Há ${docs.length} documento(s) aguardando seu acordo.</b><p>Leia a anamnese, veja as fotos e confirme o termo.</p></div><br>`:''}
+ ${due.length?`<div class=v10-alert><b>🔔 Lembrete de pagamento</b><p>Você tem ${due.length} parcela(s) vencendo amanhã.</p></div><br>`:''}
+ <div class=card><h2>Agende seu próximo momento</h2><p class=muted>Escolha um serviço e siga as etapas.</p><div class=service-grid>${SERVICES.map(s=>`<div class=service-card onclick="startBooking(${s.id})"><div class=service-art>${s.icon}</div><div class=service-body><b>${s.n}</b><small>A partir de ${money(s.base)}</small></div></div>`).join('')}</div></div></div></main>`
+}
+function clientDocuments(){
+ let c=db.clients[0]||{},docs=c.sharedDocs||[];
+ return `${header()}<main><div class=client-shell><div class=page-head><div><h1>Documentos</h1><p>Anamnese, fotos, parecer profissional e termo de responsabilidade.</p></div></div>
+ ${docs.length?docs.map(d=>clientDocCard(d,c.id)).join(''):'<div class=card><p class=muted>Nenhum documento disponível.</p></div>'}</div></main>`
+}
+function clientDocCard(d,cid){
+ return `<div class=card style="margin-bottom:14px"><div class=page-head><div><h2>${esc(d.title)}</h2><span class="badge ${d.status==='accepted'?'ok':'warn'}">${d.status==='accepted'?'Acordo registrado':'Aguardando seu acordo'}</span></div><span class=v10-mini>${v10Date(d.date)}${d.time?' • '+d.time:''}</span></div>
+ ${d.desc?`<p><b>Parecer profissional</b><br>${esc(d.desc)}</p>`:''}${d.risk?`<div class=v10-alert><b>Riscos / contraindicações</b><br>${esc(d.risk)}</div><br>`:''}
+ ${(d.photos||[]).length?`<h3>Fotos</h3><div class=v10-thumbs>${d.photos.map(p=>`<img src="${p}" alt="Foto enviada pelo salão">`).join('')}</div><br>`:''}
+ ${d.text?`<div class=v10-doc><b>Termo de responsabilidade</b><p>${esc(d.text)}</p></div>`:''}
+ ${d.status!=='accepted'?`<div class=v10-ok><label><input type=checkbox id="agree_${d.id}"> Li as informações, entendi os riscos e estou de acordo com o documento e termo.</label><br><br><button class="btn primary" onclick="acceptDoc(${cid},${d.id})">Dar meu acordo</button></div>`:`<div class=v10-ok><b>✓ Acordo registrado</b><p>${esc(d.acceptedAt||'')}</p></div>`}
+ </div>`
+}
+function acceptDoc(cid,id){
+ let c=v10Client(cid),d=(c.sharedDocs||[]).find(x=>x.id===id);if(!d)return;
+ let cb=document.getElementById('agree_'+id);if(!cb?.checked){toast('Confirme a leitura e o acordo.');return}
+ d.status='accepted';d.acceptedAt=v10Now();c.term=true;v10History(c,`${v10Date(d.date)} • ${d.title} • Aceite digital registrado em ${d.acceptedAt}`);save();toast('Acordo registrado com data e hora.');render()
+}
+
+/* Render remains the original visual shell. */
+function render(){try{if(app.role==='pro')pro();else document.getElementById('root').innerHTML=client()}catch(e){console.error(e);document.getElementById('root').innerHTML='<div style="padding:30px;font-family:Arial">Ocorreu um erro ao carregar. Recarregue a página.</div>'}}
+
+safeRender();
+</script>
+<noscript><div style="padding:24px;font-family:Arial,sans-serif">Ative o JavaScript no navegador para usar o aplicativo ED & DU.</div></noscript>
+</body>
+</html>

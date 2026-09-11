@@ -1,0 +1,104 @@
+splay:grid;grid-template-columns:1fr 1fr;gap:10px}.demo-role .btn{padding:15px}
+.bottom-nav{display:none}
+
+@media(max-width:1000px){.sidebar{width:205px}.grid4{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:1fr 1fr}.quick{grid-template-columns:1fr 1fr}}
+@media(max-width:760px){
+ .appbar{height:68px;padding:0 13px}.brandmark{width:36px;height:36px}.brandtext b{font-size:14px}.brandtext span{font-size:9px}.role button{padding:8px 10px}
+ .layout{display:block}.sidebar{display:none}.content{padding:20px 15px 95px}.page-head{align-items:flex-start}.page-head h1{font-size:25px}.grid2,.grid3,.grid4{grid-template-columns:1fr}.service-grid{grid-template-columns:1fr 1fr}.quick{grid-template-columns:1fr 1fr}
+ .bottom-nav{display:flex;position:fixed;left:0;right:0;bottom:0;height:66px;background:rgba(255,255,255,.97);border-top:1px solid var(--line);z-index:50;padding-bottom:env(safe-area-inset-bottom);overflow:auto}.bottom-nav button{border:0;background:transparent;min-width:82px;flex:1;color:#555;padding:8px 4px;font-size:11px}.bottom-nav button.active{font-weight:800;color:#222}.bottom-nav span{display:block;font-size:18px;line-height:22px}
+ .order-line{grid-template-columns:1fr 1fr}.order-line>*:last-child{grid-column:1/-1}.hero{align-items:flex-start}.points{min-width:105px}.two{grid-template-columns:1fr}
+ table{min-width:680px}.table-scroll{overflow:auto}
+}
+@media(max-width:460px){.service-grid{grid-template-columns:1fr}.hero{display:block}.points{text-align:left;margin-top:18px}.role button{padding:8px 8px}.brandtext span{display:none}}
+
+.v10-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.v10-tabs .btn.on{background:#292825;color:#fff}
+.v10-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.v10-doc{border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0;background:#fbfaf8}
+.v10-thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.v10-thumbs img{width:82px;height:82px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+.v10-alert{padding:13px;border-radius:12px;background:#f7eee2;border:1px solid #e7d7bd}
+.v10-ok{padding:13px;border-radius:12px;background:#eef6ef;border:1px solid #d6e6d8}
+.v10-mini{font-size:12px;color:#777}
+.v10-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+@media(max-width:800px){.v10-kpis{grid-template-columns:repeat(2,1fr)}.v10-tabs{overflow:auto;flex-wrap:nowrap}.v10-tabs .btn{white-space:nowrap}}
+
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="toast" class="toast"></div>
+<div id="modal" class="modal-back"></div>
+<script>
+const SERVICES=[
+ {id:1,n:'Corte Feminino',base:110,long:140,cost:49,time:60,icon:'✂️'},
+ {id:2,n:'Corte Masculino',base:89,long:89,cost:31,time:45,icon:'✂️'},
+ {id:3,n:'Corte + Secagem',base:136,long:166,cost:56,time:60,icon:'💨'},
+ {id:4,n:'Escova Efeito Liso',base:99,long:130,cost:46,time:60,icon:'✨'},
+ {id:5,n:'Escova com Text.',base:112,long:140,cost:53,time:60,icon:'✨'},
+ {id:6,n:'Lava e seca',base:89,long:99,cost:29,time:45,icon:'🫧'},
+ {id:7,n:'Bio Nutrição',base:89,long:99,cost:41,time:60,icon:'🌿'},
+ {id:8,n:'Bio Reconstrução',base:149,long:179,cost:50,time:75,icon:'🧴'},
+ {id:9,n:'Coloração Avulso',base:189,long:289,cost:110,time:120,icon:'🎨'},
+ {id:10,n:'Selagem 3D',base:229,long:329,cost:180,time:120,icon:'✨'},
+ {id:11,n:'Escova progressiva',base:289,long:389,cost:180,time:150,icon:'✨'},
+ {id:12,n:'Alisamento',base:259,long:359,cost:180,time:150,icon:'💫'},
+ {id:13,n:'Combo Mechas Dia',base:729,long:849,cost:315,time:240,icon:'🎨'},
+ {id:14,n:'Combo Master',base:1599,long:1999,cost:802,time:300,icon:'👑'},
+ {id:15,n:'Combo Coloração',base:249,long:349,cost:170,time:180,icon:'🎨'},
+ {id:16,n:'Combo Terapia',base:599,long:799,cost:197,time:180,icon:'🧴'}
+];
+const PROS=['Ana','Eduardo','Marina'];
+const demo={
+ clients:[
+  {id:1,name:'Mariana Silva',phone:'(11) 99999-1111',email:'mariana@email.com',points:340,term:true,anam:'Sensibilidade no couro cabeludo.',history:['12/09/2026 • Corte Feminino • Ana • R$ 110'],anams:[]},
+  {id:2,name:'João Pedro',phone:'(11) 98888-2222',email:'joao@email.com',points:180,term:false,anam:'Sem restrições registradas.',history:['10/09/2026 • Coloração Avulso • Maria • R$ 189'],anams:[]}
+ ],
+ requests:[
+  {id:1,clientId:1,client:'Mariana Silva',serviceId:3,service:'Corte + Secagem',prof:'Ana',date:'2026-09-18',time:'14:00',status:'Pendente'},
+  {id:2,clientId:2,client:'João Pedro',serviceId:9,service:'Coloração Avulso',prof:'Marina',date:'2026-09-18',time:'16:00',status:'Aprovado'}
+ ],
+ orders:[
+  {id:100,clientId:2,client:'João Pedro',prof:'Marina',items:[{serviceId:9,length:'base'}],discount:0,discountReason:'',open:false,payment:'paid',paidAt:'10/09/2026 18:20'}
+ ],
+ fixedCosts:21300,revenue:48750,att:281
+};
+let db;
+try{
+ const raw=localStorage.getItem('eddu_v8');
+ db=raw?JSON.parse(raw):null;
+ if(!db || !Array.isArray(db.clients) || !Array.isArray(db.orders) || !Array.isArray(db.requests)) db=JSON.parse(JSON.stringify(demo));
+}catch(e){db=JSON.parse(JSON.stringify(demo)); try{localStorage.removeItem('eddu_v8')}catch(_){} }
+let app={role:'pro',page:'dashboard',clientPage:'home',modal:null,editingOrder:null,selectedClient:1};
+function save(){localStorage.setItem('eddu_v8',JSON.stringify(db))}
+const money=n=>Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+const svc=id=>SERVICES.find(x=>x.id==id);
+function toast(t){let x=document.getElementById('toast');x.textContent=t;x.classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>x.classList.remove('show'),2600)}
+function setRole(r){app.role=r;app.page=r==='pro'?'dashboard':'home';render()}
+function go(p){app.page=p;render()}
+function cgo(p){app.clientPage=p;render()}
+function orderCalc(o){
+ let sub=0,cost=0;
+ (o.items||[]).forEach(i=>{let s=svc(i.serviceId);sub+=(i.length==='long'?s.long:s.base);cost+=s.cost});
+ let discount=Math.max(0,Math.min(Number(o.discount)||0,sub));
+ let net=sub-discount,commission=net*.30,profit=net-cost-commission;
+ return {sub,discount,net,cost,commission,profit};
+}
+function header(){
+ return `<header class="appbar"><div class="brand"><div class="brandmark">E</div><div class="brandtext"><b>ED & DU</b><span>Terapia da Beleza</span></div></div>
+ <div class="role"><button class="${app.role==='pro'?'active':''}" onclick="setRole('pro')">Profissional</button><button class="${app.role==='client'?'active':''}" onclick="setRole('client')">Cliente</button></div></header>`
+}
+function proNav(){
+ let ns=[['dashboard','⌂','Início'],['requests','◉','Solicitações'],['agenda','▣','Agenda'],['clients','♙','Clientes'],['orders','▤','Comandas'],['finance','◔','Financeiro']];
+ return ns.map(n=>`<button class="nav ${app.page===n[0]?'active':''}" onclick="go('${n[0]}')">${n[1]} &nbsp; ${n[2]}</button>`).join('')
+}
+function bottomNav(){let ns=[['dashboard','⌂','Início'],['requests','●','Pedidos'],['agenda','▣','Agenda'],['clients','♙','Clientes'],['finance','◔','Financeiro']];return `<nav class=bottom-nav>${ns.map(n=>`<button class="${app.page===n[0]?'active':''}" onclick="go('${n[0]}')"><span>${n[1]}</span>${n[2]}</button>`).join('')}<button onclick="go('orders')"><span>▤</span>Comandas</button></nav>`}
+function pro(){
+ let body={dashboard:dashboard,requests:requests,agenda:agenda,clients:clients,orders:orders,finance:finance}[app.page]();
+ document.getElementById('root').innerHTML=header()+`<div class=layout><aside class=sidebar><div class=side-title>Gestão do salão</div>${proNav()}<div class=side-bottom><div class=online><i class=dot></i>Modo teste ativo</div></div></aside><main>${body}</main></div>${bottomNav()}`
+}
+function dashboard(){
+ let paid=db.orders.filter(o=>o.payment==='paid'),rev=paid.reduce((a,o)=>a+orderCalc(o).net,0)+45000; // demo keeps dashboard populated
+ let costs=db.fixedCosts,profit=rev-costs;
+ return `<div class=content><div class=page-head><d

@@ -1,0 +1,79 @@
+0:30','14:00','16:00','16:30','18:00'].map(t=>`<option ${t===b.time?'selected':''}>${t}</option>`).join('')}</select></div></div><div class=summary><h3>5. Confirmar</h3><p>${b.serviceId?svc(b.serviceId).n:'Escolha o serviço'} • ${b.prof||'Escolha o profissional'} • ${b.date||'Escolha a data'} • ${b.time||'Escolha a hora'}</p><button class="btn primary" onclick="submitBooking()">Enviar solicitação</button></div></div></div></main>`}
+function submitBooking(){if(!booking.serviceId||!booking.prof||!booking.date||!booking.time){toast('Complete as etapas na ordem antes de enviar.');return}let s=svc(booking.serviceId);db.requests.unshift({id:Date.now(),clientId:1,client:db.clients[0].name,serviceId:s.id,service:s.n,prof:booking.prof,date:booking.date,time:booking.time,status:'Pendente'});save();toast('Solicitação enviada: Pendente de aprovação.');booking.status='Pendente de aprovação';app.clientPage='appointments';render()}
+function clientAppointments(){let r=db.requests.find(x=>x.clientId===1)||null;return `${header()}<main><div class=client-shell><div class=page-head><div><h1>Meus agendamentos</h1><p>Acompanhe ou altere sua solicitação.</p></div></div><div class=card>${r?`<h2>${esc(r.service)}</h2><p>${esc(r.prof)} • ${r.date.split('-').reverse().join('/')} • ${r.time}</p><span class="badge ${r.status==='Aprovado'?'ok':'warn'}">${esc(r.status)}</span><br><br><div class=actions><button class=btn onclick="cgo('book')">Alterar agendamento</button><button class="btn danger" onclick="toast('Solicitação de cancelamento registrada.')">Solicitar cancelamento</button></div>`:'<p class=muted>Nenhum agendamento encontrado.</p>'}</div></div></main>`}
+function clientPayments(){let list=db.orders.filter(o=>o.clientId===1&&!o.open);return `${header()}<main><div class=client-shell><div class=page-head><div><h1>Pagamentos</h1><p>Você vê somente o valor final, pagamento e pontos.</p></div></div>${list.length?list.map(o=>{let x=orderCalc(o);return `<div class=card style="margin-bottom:12px"><div class=page-head><div><h2>${esc(o.client)}</h2><span class=badge ${o.payment==='paid'?'ok':'warn'}>${o.payment==='paid'?'Pago':'Aguardando pagamento'}</span></div><strong style="font-size:24px">${money(x.net)}</strong></div><p class=muted>${x.net/10|0} pontos acumulados</p>${o.payment!=='paid'?'<button class="btn primary" onclick="payDemo('+o.id+')">Pagar com Pix / cartão</button>':''}</div>`}).join(''):'<div class=card><p class=muted>Nenhuma comanda aguardando pagamento.</p></div>'}</div></main>`}
+function payDemo(id){markPaid(id);toast('Pagamento de teste confirmado.');app.clientPage='payments';render()}
+function render(){if(app.role==='pro')pro();else document.getElementById('root').innerHTML=client()}
+function safeRender(){try{render()}catch(e){console.error(e);document.getElementById('root').innerHTML='<div style="min-height:100vh;display:grid;place-items:center;padding:28px;background:#f4f2ee;font-family:Arial,sans-serif"><div style="max-width:620px;background:white;border:1px solid #e6e1d9;border-radius:20px;padding:28px"><b>ED & DU | Terapia da Beleza</b><h1>Aplicação pronta para teste</h1><p>O aplicativo carregou, mas ocorreu um erro interno. Recarregue a página para tentar novamente.</p></div></div>'}}
+
+/* ===== ED & DU v10 — functional extensions, visual layout preserved ===== */
+function v10Init(){
+  db.payables=db.payables||[];
+  db.receivables=db.receivables||[];
+  db.clients=db.clients||[];
+  db.clients.forEach(c=>{
+    c.anams=c.anams||[];
+    c.history=c.history||[];
+    c.sharedDocs=c.sharedDocs||[];
+    if(c.term===undefined)c.term=false;
+  });
+  app.financeTab=app.financeTab||'dashboard';
+  app.clientPage=app.clientPage||'home';
+  try{localStorage.setItem('eddu_v8',JSON.stringify(db))}catch(e){}
+}
+v10Init();
+
+function v10Today(){return new Date().toISOString().slice(0,10)}
+function v10Now(){return new Date().toLocaleString('pt-BR')}
+function v10Date(v){if(!v)return '—';let p=String(v).split('-');return p.length===3?p.reverse().join('/'):v}
+function v10Payment(p){return ({pix:'Pix',boleto:'Boleto',credit:'Cartão de crédito recorrente',debit:'Cartão de débito',cash:'Dinheiro',internal:'Parcelamento interno'})[p]||'—'}
+function v10ReadFile(input){
+ return new Promise(resolve=>{
+  const f=input?.files?.[0];
+  if(!f)return resolve(null);
+  const r=new FileReader();
+  r.onload=()=>resolve({name:f.name,data:r.result,type:f.type});
+  r.readAsDataURL(f);
+ });
+}
+function v10ReadImages(input){
+ return Promise.all([...((input&&input.files)||[])].map(f=>new Promise(resolve=>{
+  const r=new FileReader();r.onload=()=>resolve(r.result);r.readAsDataURL(f);
+ })));
+}
+function v10Client(id){return db.clients.find(c=>c.id===id)}
+function v10History(c,text){c.history=c.history||[];c.history.unshift(text)}
+function v10Tomorrow(d){
+ let x=new Date(d+'T00:00:00');x.setDate(x.getDate()+1);return x.toISOString().slice(0,10)
+}
+
+/* --- CLIENTES / FICHA --- */
+function clients(){
+ return `<div class=content><div class=page-head><div><h1>Clientes</h1><p>Cadastro, WhatsApp, ficha, anamnese e termo digital.</p></div><button class="btn primary" onclick="newClient()">+ Novo cliente</button></div>
+ <div class=card><div class=table-scroll><table><thead><tr><th>Cliente</th><th>Contato</th><th>Fidelidade</th><th>Termo</th><th>Ações</th></tr></thead><tbody>
+ ${db.clients.map(c=>`<tr><td><b>${esc(c.name)}</b></td><td>${esc(c.phone)}<br>${esc(c.email||'')}</td><td><span class="badge ok">${c.points||0} pontos</span></td><td><span class="badge ${c.term?'ok':'warn'}">${c.term?'Assinado':'Pendente'}</span></td><td><div class=actions><button class=btn onclick="editClient(${c.id})">Editar</button><button class=btn onclick="wa('${esc(c.phone)}','Olá ${esc(c.name)}, aqui é da ED & DU | Terapia da Beleza.')">WhatsApp</button><button class="btn primary" onclick="openClientFile(${c.id})">Abrir ficha</button></div></td></tr>`).join('')}
+ </tbody></table></div></div></div>`
+}
+function newClient(){showModal('Novo cliente',v10ClientForm({},'new'))}
+function editClient(id){showModal('Editar dados cadastrais',v10ClientForm(v10Client(id),'edit'))}
+function v10ClientForm(c,mode){
+ return `<div class=two><div class=field><label>Nome completo</label><input id=cn value="${esc(c.name||'')}"></div><div class=field><label>Telefone / WhatsApp</label><input id=cp value="${esc(c.phone||'')}"></div></div>
+ <div class=two><div class=field><label>E-mail</label><input id=ce type=email value="${esc(c.email||'')}"></div><div class=field><label>Data de nascimento</label><input id=cbirth type=date value="${esc(c.birth||'')}"></div></div>
+ <div class=field><label>Observações iniciais</label><textarea id=cobs rows=3 placeholder="Alergias, sensibilidades, preferências e observações gerais.">${esc(c.anam||'')}</textarea></div>
+ <div class=actions><button class="btn outline" onclick="closeModal()">Cancelar</button><button class="btn primary" onclick="${mode==='new'?'createClient()':'updateClient('+c.id+')'}">${mode==='new'?'Cadastrar':'Salvar alterações'}</button></div>`
+}
+function createClient(){
+ let n=document.getElementById('cn').value.trim(),p=document.getElementById('cp').value.trim();
+ if(!n||!p){toast('Nome e telefone são obrigatórios.');return}
+ let id=Date.now(),c={id,name:n,phone:p,email:document.getElementById('ce').value.trim(),birth:document.getElementById('cbirth').value,points:0,term:false,anam:document.getElementById('cobs').value.trim(),anams:[],history:[],sharedDocs:[]};
+ db.clients.push(c);save();closeModal();toast('Cliente cadastrado com sucesso.');render();setTimeout(()=>openClientFile(id),60)
+}
+function updateClient(id){
+ let c=v10Client(id);if(!c)return;
+ c.name=document.getElementById('cn').value.trim()||c.name;c.phone=document.getElementById('cp').value.trim()||c.phone;c.email=document.getElementById('ce').value.trim();c.birth=document.getElementById('cbirth').value;c.anam=document.getElementById('cobs').value.trim();
+ save();closeModal();toast('Cadastro atualizado.');render()
+}
+function openClientFile(id){
+ let c=v10Client(id);if(!c)return;app.selectedClient=id;
+ showModal('Ficha do Cliente',`<div class=actions><button class=btn onclick="editClient(${id})">Editar cadastro</button><button class=btn onclick="wa('${esc(c.phone)}','Olá ${esc(c.name)}, tudo bem? Aqui é da ED & DU | Terapia da Beleza.')">WhatsApp</button><button class="btn primary" onclick="sendTerm(${id})">Enviar termo</button></div><br>`)
+}
