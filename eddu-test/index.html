@@ -5,29 +5,45 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#242321">
 <title>ED & DU | Terapia da Beleza</title>
-<style>html,body{margin:0;width:100%;height:100%;background:#f4f2ee}#app{width:100%;height:100%;display:grid;place-items:center}#status{font:14px/1.5 Arial,sans-serif;color:#77736c;text-align:center;padding:24px}#status b{display:block;color:#242321;font-size:18px;margin-bottom:8px}</style>
+<style>
+html,body{margin:0;width:100%;height:100%;background:#f4f2ee}
+#app{width:100%;height:100%;display:grid;place-items:center}
+#status{font:14px/1.5 Arial,sans-serif;color:#77736c;text-align:center;padding:24px}
+#status b{display:block;color:#242321;font-size:18px;margin-bottom:8px}
+</style>
 </head>
 <body>
 <div id="app"><div id="status"><b>ED & DU</b>Carregando o sistema…</div></div>
 <script>
 (async function(){
-  const base='https://raw.githubusercontent.com/bragace28-ship-it/autonomous-survival-agent/main/eddu-test/';
-  const parts=['ch0.html','ch1.html','ch2.html','ch3.html','ch4.html','ch5.html','ch6.html','ch7.html','ch8.html'];
+  const src='https://raw.githubusercontent.com/bragace28-ship-it/autonomous-survival-agent/main/eddu-test/preview.html?v=20260913';
   try{
-    const responses=await Promise.all(parts.map(function(p){return fetch(base+p+'?v=20260912',{cache:'no-store'});}));
-    if(responses.some(function(r){return !r.ok;})) throw new Error('Falha ao carregar módulos');
-    let html=(await Promise.all(responses.map(function(r){return r.text();}))).join('');
+    const response=await fetch(src,{cache:'no-store'});
+    if(!response.ok) throw new Error('HTTP '+response.status);
+    let html=await response.text();
+
+    // Corrige a versão que transforma o retorno de pro() em "undefined".
+    html=html.replace(
+      "function render(){document.getElementById('app').innerHTML=role==='pro'?pro():client()}render();",
+      "function render(){if(role==='pro'){pro()}else{document.getElementById('app').innerHTML=client()}}render();"
+    );
+
+    // Protege fechamentos </script> internos antes do parsing do HTML.
     const tag='<'+'/script>';
-    const pos=html.lastIndexOf(tag);
-    if(pos>=0){
-      const before=html.slice(0,pos).replace(new RegExp('<'+'/script>','gi'),'<\\/script>');
-      html=before+tag+html.slice(pos+tag.length);
+    const last=html.lastIndexOf(tag);
+    if(last>=0){
+      const before=html.slice(0,last).replace(new RegExp('<'+'/script>','gi'),'<\\/script>');
+      html=before+tag+html.slice(last+tag.length);
     }
+
     const parsed=new DOMParser().parseFromString(html,'text/html');
-    if(!parsed || !parsed.body) throw new Error('HTML inválido');
+    if(!parsed.body) throw new Error('HTML inválido');
+
     document.title=parsed.title||'ED & DU | Terapia da Beleza';
     document.head.innerHTML=parsed.head.innerHTML;
     document.body.innerHTML=parsed.body.innerHTML;
+
+    // Scripts inseridos via innerHTML não executam; recriamos cada um para executá-los.
     const scripts=Array.from(document.querySelectorAll('script'));
     scripts.forEach(function(oldScript){
       const s=document.createElement('script');
@@ -37,7 +53,8 @@
     });
   }catch(e){
     console.error('EDDU loader:',e);
-    document.getElementById('app').innerHTML='<div id="status"><b>ED & DU</b>Não foi possível carregar o sistema.<br><small>Erro de carregamento. Atualize a página para tentar novamente.</small></div>';
+    const box=document.getElementById('app');
+    if(box) box.innerHTML='<div id="status"><b>ED & DU</b>Falha ao carregar o sistema.<br><small>'+String(e.message||e)+'</small></div>';
   }
 })();
 </script>
