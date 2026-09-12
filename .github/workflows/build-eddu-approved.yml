@@ -1,0 +1,59 @@
+name: Build ED DU approved app
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'eddu-test/ch0.html'
+      - 'eddu-test/ch1.html'
+      - 'eddu-test/ch2.html'
+      - 'eddu-test/ch3.html'
+      - 'eddu-test/ch4.html'
+      - 'eddu-test/ch5.html'
+      - 'eddu-test/ch6.html'
+      - 'eddu-test/ch7.html'
+      - 'eddu-test/ch8.html'
+      - '.github/workflows/build-eddu-approved.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble approved V13.1 + V15 app
+        shell: python
+        run: |
+          from pathlib import Path
+          files=[Path(f'eddu-test/ch{i}.html') for i in range(9)]
+          html=''.join(p.read_text(encoding='utf-8') for p in files)
+          tag='</script>'
+          pos=html.rfind(tag)
+          if pos < 0:
+              raise SystemExit('Final script tag not found')
+          before=html[:pos].replace(tag, '<\\/script>')
+          html=before+html[pos:]
+          Path('eddu-test/approved.html').write_text(html,encoding='utf-8')
+      - name: Validate JavaScript
+        shell: python
+        run: |
+          import re, subprocess
+          from pathlib import Path
+          html=Path('eddu-test/approved.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script[^>]*>(.*?)</script>',html,re.S|re.I)
+          if not scripts:
+              raise SystemExit('No script found')
+          Path('/tmp/eddu.js').write_text(scripts[-1],encoding='utf-8')
+          r=subprocess.run(['node','--check','/tmp/eddu.js'],text=True,capture_output=True)
+          print(r.stdout); print(r.stderr)
+          if r.returncode: raise SystemExit(r.returncode)
+      - name: Commit assembled app
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add eddu-test/approved.html
+          git diff --cached --quiet || git commit -m 'build: assemble approved ED DU app'
+          git push
