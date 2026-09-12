@@ -14,7 +14,14 @@
  try{
    const responses=await Promise.all(parts.map(p=>fetch(base+p+'?v=20260911',{cache:'no-store'})));
    if(responses.some(r=>!r.ok)) throw new Error('Falha ao carregar módulos');
-   const html=(await Promise.all(responses.map(r=>r.text()))).join('');
+   let html=(await Promise.all(responses.map(r=>r.text()))).join('');
+   // Alguns módulos contêm </script> dentro de template literals. Se o navegador
+   // interpretar esse trecho antes do script real terminar, o restante do JS vira texto.
+   // Escapamos somente os fechamentos anteriores ao último fechamento real do documento.
+   const lastScript=html.lastIndexOf('</script>');
+   if(lastScript>=0){
+     html=html.slice(0,lastScript).replace(/<\/script>/gi,'<\\/script>')+html.slice(lastScript);
+   }
    const blob=new Blob([html],{type:'text/html;charset=utf-8'});
    const url=URL.createObjectURL(blob);
    const frame=document.createElement('iframe');
@@ -22,6 +29,7 @@
    frame.src=url;
    document.getElementById('app').replaceChildren(frame);
  }catch(e){
+   console.error(e);
    document.getElementById('app').innerHTML='<div style="font-family:Arial,sans-serif;padding:28px"><h2>ED & DU</h2><p>Não foi possível carregar o teste.</p><button onclick="location.reload()" style="padding:12px 16px;border:0;border-radius:10px;background:#242321;color:#fff">Tentar novamente</button></div>';
  }
 })();
